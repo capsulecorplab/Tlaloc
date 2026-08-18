@@ -18,3 +18,6 @@ Metacello new baseline: 'Tlaloc';
 
 NOTE: Evaluate by highlighting the code, then either right-click on the highlighted code and click `Do it` or press `Ctrl+D`.
 
+## Etymology
+
+[Tlaloc](https://en.wikipedia.org/wiki/Tl%C3%A1loc) is the Aztec god of rain.
