@@ -46,27 +46,10 @@ TlalocForecast >> apiQuery [
 
 { #category : 'scripting api - executing' }
 TlalocForecast >> call [
-	"Execute an API call for a given API query"
+	"Execute an API call for a given API query and tabulate the result"
 
-	| parsedQueryResult hourly hourly_units rows columns |
 	queryResult := self apiQuery asZnUrl retrieveContents.
-	parsedQueryResult := STONJSON fromString: queryResult.
-	hourly := parsedQueryResult at: 'hourly'.
-	hourly_units := parsedQueryResult at: 'hourly_units'.
-	rows := (hourly at: 'time') size.
-	columns := hourly size.
-	columnNames := { 'time' } , hourlyParameters.
-	self
-		rows: rows
-		columns: columns
-		tabulate: [ :row :column |
-				| columnName cellValue |
-				columnName := columnNames at: column.
-				cellValue := hourly at: columnName at: row.
-				columnName = 'time'
-					ifTrue: [ cellValue asDate asString , ' ' , cellValue asDateAndTime asTime asString ]
-					ifFalse: [ cellValue ] ]
-		columnNames: (columnNames collect: [ :key | key , ' (' , (hourly_units at: key) , ')' ])
+	self tabulateQueryResult
 ]
 
 { #category : 'accessing' }
@@ -127,6 +110,41 @@ TlalocForecast >> openMeteoAPI [
 TlalocForecast >> precipitationUnit: aPrecipitationUnitString [
 
 	precipitationUnit := aPrecipitationUnitString
+]
+
+{ #category : 'operations' }
+TlalocForecast >> tabulateQueryResult [
+	"Tabulate the result returned from executing the API query"
+
+	| parsedQueryResult hourly hourly_units rows columns |
+	parsedQueryResult := STONJSON fromString: queryResult.
+	hourly := parsedQueryResult at: 'hourly'.
+	hourly_units := parsedQueryResult at: 'hourly_units'.
+	rows := (hourly at: 'time') size.
+	columns := hourly size + 1.
+	columnNames := { 'date' } , { 'time' } , hourlyParameters.
+	self
+		rows: rows
+		columns: columns
+		tabulate: [ :row :column |
+				| columnName cellValue |
+				columnName := columnNames at: column.
+				columnName = 'date'
+					ifTrue: [
+							cellValue := hourly at: 'time' at: row.
+							cellValue asDate ]
+					ifFalse: [
+							cellValue := hourly at: columnName at: row.
+							columnName = 'time'
+								ifTrue: [ cellValue asDateAndTime asTime asString ]
+								ifFalse: [ cellValue ] ] ]
+		columnNames: (columnNames collect: [ :key |
+					 key = 'date'
+						 ifTrue: [ key ]
+						 ifFalse: [
+								 key = 'time'
+									 ifTrue: [ key , ' (' , timezone , ')' ]
+									 ifFalse: [ key , ' (' , (hourly_units at: key) , ')' ] ] ])
 ]
 
 { #category : 'setter' }
