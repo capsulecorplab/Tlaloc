@@ -21,5 +21,5 @@ BaselineOfTlaloc >> baseline: spec [
 BaselineOfTlaloc >> patternBuffer: spec [
 	"baseline for PatternBuffer"
 
-	spec baseline: 'PatternBuffer' with: [ spec repository: 'github://capsulecorplab/patternbuffer:v0.6.0/src' ]
+	spec baseline: 'PatternBuffer' with: [ spec repository: 'github://capsulecorplab/patternbuffer:v0.7.0/src' ]
 ]
