@@ -20,7 +20,7 @@ TlalocForecast new
 "
 Class {
 	#name : 'TlalocForecast',
-	#superclass : 'PBArray2D',
+	#superclass : 'PBArrayND',
 	#instVars : [
 		'latitude',
 		'longitude',
@@ -30,7 +30,8 @@ Class {
 		'precipitationUnit',
 		'timezone',
 		'queryResult',
-		'forecastDays'
+		'forecastDays',
+		'hourlyUnits'
 	],
 	#category : 'Tlaloc-Objects',
 	#package : 'Tlaloc',
@@ -112,21 +113,34 @@ TlalocForecast >> precipitationUnit: aPrecipitationUnitString [
 	precipitationUnit := aPrecipitationUnitString
 ]
 
+{ #category : 'accessing' }
+TlalocForecast >> setTableColumnNames [
+	"decorates table column names with hourly units"
+
+	self tableColumnNames: [ :key |
+			key = 'date'
+				ifTrue: [ key ]
+				ifFalse: [
+						key = 'time'
+							ifTrue: [ key , ' (' , timezone , ')' ]
+							ifFalse: [ key , ' (' , (hourlyUnits at: key) , ')' ] ] ]
+]
+
 { #category : 'operations' }
 TlalocForecast >> tabulateQueryResult [
 	"Tabulate the result returned from executing the API query"
 
-	| parsedQueryResult hourly hourly_units rows columns |
+	| parsedQueryResult hourly rows columns |
 	parsedQueryResult := STONJSON fromString: queryResult.
 	hourly := parsedQueryResult at: 'hourly'.
-	hourly_units := parsedQueryResult at: 'hourly_units'.
+	hourlyUnits := parsedQueryResult at: 'hourly_units'.
 	rows := (hourly at: 'time') size.
 	columns := hourly size + 1.
 	columnNames := { 'date' } , { 'time' } , hourlyParameters.
 	self
 		rows: rows
 		columns: columns
-		tabulate: [ :row :column |
+		tabulate: [ :column :row |
 				| columnName cellValue |
 				columnName := columnNames at: column.
 				columnName = 'date'
@@ -138,13 +152,8 @@ TlalocForecast >> tabulateQueryResult [
 							columnName = 'time'
 								ifTrue: [ cellValue asDateAndTime asTime asString ]
 								ifFalse: [ cellValue ] ] ]
-		columnNames: (columnNames collect: [ :key |
-					 key = 'date'
-						 ifTrue: [ key ]
-						 ifFalse: [
-								 key = 'time'
-									 ifTrue: [ key , ' (' , timezone , ')' ]
-									 ifFalse: [ key , ' (' , (hourly_units at: key) , ')' ] ] ])
+		columnNames: columnNames;
+		setTableColumnNames
 ]
 
 { #category : 'setter' }
